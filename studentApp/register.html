@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registration Form with AJAX</title>
+  <style>
+  body {
+    font-family: sans-serif;
+    padding: 20px;
+    background-color: #f9f9f9;
+    display: flex;
+    gap: 40px;
+  }
+
+  .container {
+    width: 350px;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  form h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+  }
+
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+
+  input[type="radio"],
+  input[type="checkbox"] {
+    margin-right: 5px;
+  }
+
+  .error {
+    color: red;
+    font-size: 13px;
+    margin-top: 5px;
+    display: none;
+  }
+
+  button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  table {
+    width: 100%;
+    background-color: #fff;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f0f0f0;
+  }
+
+  td button {
+    margin-right: 5px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+</style>
+
+</head>
+<body>
+
+  <div class="container">
+    <form id="registrationForm" novalidate>
+      <h2>Register</h2>
+
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" />
+      <div id="nameError" class="error">Please enter a valid full name.</div>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" />
+      <div id="emailError" class="error">Invalid email.</div>
+
+      <label for="phone">Phone</label>
+      <input type="text" id="phone" name="phone" maxlength="10" />
+      <div id="phoneError" class="error">10 digit phone number required.</div>
+
+      <label>Gender</label><br />
+      <label><input type="radio" name="gender" value="Male" /> Male</label>
+      <label><input type="radio" name="gender" value="Female" /> Female</label>
+      <label><input type="radio" name="gender" value="Other" /> Other</label>
+      <div id="genderError" class="error">Select gender.</div>
+
+      <label for="state">State</label>
+      <select id="state" name="state">
+        <option value="">Select State</option>
+        <option value="Telangana">Telangana</option>
+        <option value="Delhi">Delhi</option>
+        <option value="AP">AP</option>
+        <option value="Karnataka">Karnataka</option>
+      </select>
+      <div id="stateError" class="error">Select state.</div>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" />
+      <div id="passwordError" class="error">min 6 characters.</div>
+
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" id="confirmPassword" />
+      <div id="confirmPasswordError" class="error">Passwords must match.</div>
+
+      <label><input type="checkbox" id="agree" /> I agree to terms</label>
+      <div id="agreeError" class="error">Must agree to continue.</div>
+
+      <br /><br />
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <!-- Table Display -->
+  <div>
+    <h3>Registered Users</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Gender</th>
+          <th>State</th>
+          <th>Actions</th> <!-- New column for Update/Delete buttons -->
+        </tr>
+      </thead>
+      <tbody id="dataTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- jQuery + AJAX Script -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    getData();
+
+    $("#registrationForm").on("submit", function (e) {
+      e.preventDefault();
+
+      $(".error").hide();
+      let isValid = true;
+
+      const name = $("#name").val().trim();
+      const email = $("#email").val().trim();
+      const phone = $("#phone").val().trim();
+      const gender = $("input[name='gender']:checked").val();
+      const state = $("#state").val();
+      const password = $("#password").val();
+      const confirm_password = $("#confirmPassword").val();
+      const agree = $("#agree").is(":checked");
+
+      if (!/^[A-Za-z ]{2,}$/.test(name)) $("#nameError").show(), isValid = false;
+      
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) $("#emailError").show(), isValid = false;
+     
+      if (!/^\d{10}$/.test(phone)) $("#phoneError").show(), isValid = false;
+      
+      if (!gender) $("#genderError").show(), isValid = false;
+      
+      if (!state) $("#stateError").show(), isValid = false;
+     
+      if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password)) $("#passwordError").show(), isValid = false;
+      
+      if (password !== confirm_password) $("#confirmPasswordError").show(), isValid = false;
+      
+      if (!agree) $("#agreeError").show(), isValid = false;
+     
+
+      if (!isValid) return;
+
+      const formData = { name, email,  phone, gender, state, password, confirm_password, agree };
+
+      $.ajax({
+        url: "http://127.0.0.1:8000/api/students/create/",
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(formData),
+        success: function () {
+          alert("Form submitted successfully!");
+          getData();
+          $("#registrationForm")[0].reset();
+        },
+        error: function (xhr) {
+          alert("Error submitting form.");
+        }
+      });
+    });
+
+    function getData() {
+      $.ajax({
+        url: "http://127.0.0.1:8000/api/students/",
+        method: "GET",
+        contentType: "application/json",
+        success: function (response) {
+          $("#dataTableBody").empty();
+          appendToTable(response);
+        },
+        error: function (xhr) {
+          alert("Error retrieving data.");
+        }
+      });
+    }
+
+    function appendToTable(users) {
+      if (!users) return;
+      for (const data of users) {
+        const row = `
+          <tr>
+            <td>${data.name}</td>
+            <td>${data.email}</td>
+            <td>${data.phone}</td>
+            <td>${data.gender}</td>
+            <td>${data.state}</td>
+            <td>
+              <button onclick="updateUser('${data.id}')">Update</button>
+              <button onclick="deleteUser('${data.id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+        $("#dataTableBody").append(row);
+      }
+    }
+
+    function updateUser(id) {
+      $.ajax({
+        url: `http://127.0.0.1:8000/api/students/${id}/`,
+        method: "GET",
+        contentType: "application/json",
+        success: function (user) {
+          $("#name").val(user.name);
+          $("#email").val(user.email);
+          $("#phone").val(user.phone);
+          $("input[name='gender'][value='" + user.gender + "']").prop("checked", true);
+          $("#state").val(user.state);
+
+
+          $("#registrationForm").off("submit").on("submit", function (e) {
+            e.preventDefault();
+            updateUserData(id);
+          });
+        }
+      });
+    }
+
+    function updateUserData(id) {
+      const updatedData = { name: $("#name").val(), email: $("#email").val(), phone: $("#phone").val(), gender: $("input[name='gender']:checked").val(), state: $("#state").val() , password: $("#password").val() , confirm_password : $("#confirmPassword").val() , agree: $("#agree").is(":checked")  };
+      $.ajax({
+        url: `http://127.0.0.1:8000/api/students/${id}/update/`,
+        method: "PUT",
+        contentType: "application/json",
+        data: JSON.stringify(updatedData),
+        success: function () { alert("User updated successfully!"); getData(); }
+      });
+    }
+
+    function deleteUser(id) {
+      if (!confirm("Are you sure you want to delete this user?")) return;
+
+      $.ajax({
+        url: `http://127.0.0.1:8000/api/students/${id}/delete/`,
+        method: "DELETE",
+        success: function () {
+          alert("User deleted successfully!");
+          getData();
+        },
+        error: function (xhr) {
+          alert("Error deleting user.");
+        }
+      });
+    }
+
+
+  </script>
+</body>
+</html>
